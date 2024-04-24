@@ -1,5 +1,5 @@
 <?php
-require '../vendor/autoload.php';
+require 'vendor/autoload.php';
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJarInterface;
 class TrackingEstafeta {
@@ -48,6 +48,8 @@ class TrackingEstafeta {
     }
 
     public function getTrackingDetails() {
+        $success = true;
+        $message = "";
         $response = $this->guzzleClient->get(TrackingEstafeta::$URL_SEARCH_BY_GET . "?wayBill=" . $this->wayBill . "&wayBillType=" . $this->wayBillType . "&isShipmentDetail=" . $this->isShipmentDetail);
         $html = $response->getBody()->getContents();
 
@@ -57,7 +59,8 @@ class TrackingEstafeta {
 
         $shipmentInfoDiv = $xpath->query("//div[@class='shipmentInfoDiv']");
         if ($shipmentInfoDiv->length == 0) {
-            throw new Exception('shipmentInfoDiv - not present for scraping.');
+            $success = false;
+            $message = "Algo salió mal, intentalo nuevamente";
         } else {
             $arrShipmentInfoSeparator = $xpath->query(".//div[@class='fontBold']", $shipmentInfoDiv->item(0));
             $this->scrapingWayBill = $arrShipmentInfoSeparator[0]->nodeValue;
@@ -71,6 +74,8 @@ class TrackingEstafeta {
         }
 
         $json = json_encode(array(
+            "success" => $success,
+            "message" => $message,
             "company" => "Estafeta",
             "wayBill" => $this->scrapingWayBill,
             "trackingNumber" => $this->scrapingTrackingNumber,
